@@ -8,7 +8,11 @@ classdef Clinic < handle
     methods
         function obj = Clinic(numDoctors)
             
-            obj.doctors = repmat(Doctor, numDoctors, 1);
+            obj.doctors = Doctor.empty(numDoctors, 0); % Initialize an empty array of Doctor objects
+
+            for i = 1:numDoctors
+                obj.doctors(i) = Doctor(); % Create a new Doctor instance for each element
+            end
 
             % Initialize the simulation by generating the first arrival
             obj.currentTime = 0;  % Start time of the clinic operation
