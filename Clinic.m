@@ -7,6 +7,7 @@ classdef Clinic < handle
     end
     methods
         function obj = Clinic(numDoctors)
+            
             obj.doctors = repmat(Doctor, numDoctors, 1);
 
             % Initialize the simulation by generating the first arrival
@@ -31,14 +32,23 @@ classdef Clinic < handle
             switch event.type
                 case 'arrival'
                     obj = obj.handleArrival(event.patient);
-                    disp(['Patient arrived at ', num2str(event.patient.arrivalTime)]);
+                    disp(['Patient ',num2str(event.patient.id) ,' arrived at ', num2str(event.patient.arrivalTime)]);
                 case 'startTreatment'
                     event.doctor = event.doctor.treatPatient(event.patient, obj.currentTime);
+                    disp(['Doctor ',  int2str(int64(event.doctor.id)), ' started treatment at ', num2str(obj.currentTime)]);
+                    disp(['   PatientID:',int2str(int64(event.patient.id)), ' TT: ', int2str(event.patient.departureTime - event.patient.startTime), '   C: ',  int2str(int8(event.patient.hasComplication))]);
 
                     endTreatmentEvent = Event.createEndTreatment(event.patient.departureTime, event.patient, event.doctor);
                     obj.clinicEvents = [obj.clinicEvents, endTreatmentEvent];
                 case 'endTreatment'
-                    event.doctor = event.doctor.finishTreatment();                    
+                    event.doctor = event.doctor.finishTreatment();
+                    disp(['Doctor ', num2str(event.doctor.id), ' finished treatment at ', num2str(obj.currentTime)]);
+                    if ~isempty(obj.patientQueue)
+                        nextPatient = obj.patientQueue(1);
+                        obj.patientQueue(1) = [];  % Remove this patient from the queue
+                        startTreatmentEvent = Event.createStartTreatment(obj.currentTime, nextPatient, event.doctor);
+                        obj.clinicEvents = [obj.clinicEvents, startTreatmentEvent];
+                    end                
                 otherwise
                     error('Unknown event type');
             end
@@ -75,11 +85,7 @@ classdef Clinic < handle
             nextArrivalEvent = Event.createArrival(nextArrivalTime, nextPatient);
         
             % Add the event to the clinic's event queue
-            obj.clinicEvents = [obj.clinicEvents, nextArrivalEvent];
-        
-            % Keep the clinic's event queue sorted by time
-            [~, idx] = sort([obj.clinicEvents.time]);
-            obj.clinicEvents = obj.clinicEvents(idx);
+            obj.clinicEvents = [obj.clinicEvents, nextArrivalEvent];        
         end
     end
 end
