@@ -19,10 +19,10 @@ classdef Clinic < handle
 
             % Initialize the simulation by generating the first arrival
             obj.currentTime = 0;  % Start time of the clinic operation
-            obj = obj.generateNextArrival();  % Schedule the first patient arrival
+            %obj = obj.generateNextArrival();  % Schedule the first patient arrival
 
             % Add random urgent patients
-            urgentPatientsCount = 0 %randi([6, 10]);
+            urgentPatientsCount = 0; %randi([6, 10]);
            urgentTimes = sort(randi(totalSimulationTime-1, urgentPatientsCount, 1));
 
             for i = 1:urgentPatientsCount
@@ -128,7 +128,8 @@ classdef Clinic < handle
         
             % Generate the next arrival event for non urgent patient
             if ~patient.isUrgent
-                obj = obj.generateNextArrival();
+                %In scenarios we dont need nextArrival
+                %obj = obj.generateNextArrival();
             end
         end
 
@@ -149,5 +150,78 @@ classdef Clinic < handle
                 obj.clinicEvents = [obj.clinicEvents, nextArrivalEvent];  
             end
         end
+
+        function obj = generateScheduledArrivals(obj, scenarioNumber, patientsPerInterval, appointmentInterval, endBuffer)
+            variability = 0; % +/- variability in minutes
+    
+            switch scenarioNumber
+                case 1
+                    % Scenario 1: Variable number of patients at variable intervals
+                    finalArrivalTime = obj.totalSimulationTime - endBuffer;  % Calculate the time to stop new arrivals
+                    for scheduledTime = 0:appointmentInterval:finalArrivalTime
+                        for p = 1:patientsPerInterval
+                            actualTime = scheduledTime + randi([-variability, variability], 1, 1);
+                            if actualTime < finalArrivalTime
+                                if actualTime < 0
+                                    actualTime = 0;
+                                end
+                                patient = Patient(actualTime);
+                                arrivalEvent = Event.createArrival(actualTime, patient);
+                                obj.clinicEvents = [obj.clinicEvents, arrivalEvent];
+                            end
+                        end
+                    end
+               case 2
+                    % Scenario 2: Alternating number of patients per interval
+                    patientsAlternating = [4, 3];  % Array to alternate between 4 and 3 patients
+                    finalArrivalTime = obj.totalSimulationTime - endBuffer;  % Calculate the time to stop new arrivals
+                    for interval = 0:appointmentInterval:finalArrivalTime
+                        % Determine number of patients for this interval
+                        index = mod(interval / appointmentInterval, 2) + 1;  % Alternates between 1 and 2
+                        numPatients = patientsAlternating(index);
+        
+                        for p = 1:numPatients
+                            actualTime = interval + randi([-variability, variability], 1, 1);
+                            if actualTime < finalArrivalTime
+                                if actualTime < 0
+                                    actualTime = 0;
+                                end
+                                patient = Patient(actualTime);
+                                arrivalEvent = Event.createArrival(actualTime, patient);
+                                obj.clinicEvents = [obj.clinicEvents, arrivalEvent];
+                            end
+                        end
+                    end
+            case 3
+                % Scenario 3: Patients arrive evenly spaced within each interval
+                finalArrivalTime = obj.totalSimulationTime - endBuffer;  % Calculate the time to stop new arrivals
+                for interval = 0:appointmentInterval:finalArrivalTime
+                    % Calculate the sub-interval for each patient
+                    timeStep = appointmentInterval / patientsPerInterval;
+    
+                    for i = 0:patientsPerInterval-1
+                        scheduledTime = interval + i * timeStep;
+                        scheduledTime = round(scheduledTime);
+                        actualTime = scheduledTime + randi([-variability, variability], 1, 1);
+                        if actualTime < finalArrivalTime
+                            if actualTime < 0
+                                actualTime = 0;  % Adjust for negative time due to variability
+                            end
+                            patient = Patient(actualTime);
+                            arrivalEvent = Event.createArrival(actualTime, patient);
+                            obj.clinicEvents = [obj.clinicEvents, arrivalEvent];
+                        end
+                    end
+                end
+            end
+        
+
+    
+        
+            % Sort events after adding them
+            [~, idx] = sort([obj.clinicEvents.time]);
+            obj.clinicEvents = obj.clinicEvents(idx);
+        end
+
     end
 end
