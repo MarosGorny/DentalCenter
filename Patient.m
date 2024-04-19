@@ -5,13 +5,19 @@ classdef Patient < handle
         startTime;            % Time treatment starts
         departureTime;        % Time treatment finishes
         hasComplication = false;  % Whether the treatment involves complications
+        isUrgent = false;     % Whether the patient is an urgent case
     end
 
     methods
-        function obj = Patient(arrivalTime)
-            obj.id = Patient.getNextId(); % Assign and increment ID
+        function obj = Patient(arrivalTime, isUrgent)
+            if nargin < 2
+                isUrgent = false;  % Default is not urgent
+            end
 
+            obj.id = Patient.getNextId(); % Assign and increment ID
             obj.arrivalTime = arrivalTime;
+            obj.isUrgent = isUrgent;
+
             % Randomly determine if there are complications
             if rand() < 0.2  % Assuming 20% chance of complications
                 obj.hasComplication = true;

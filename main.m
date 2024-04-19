@@ -1,9 +1,7 @@
 clc;
 
-% Create a clinic instance
-myClinic = Clinic(2);
+% Create a clinic instance with doctors and totalSimulationTime
+myClinic = Clinic(2,6*60);
 
-
-% Run the simulation for 120 minutes
-myClinic.runSimulation(120);
+myClinic.runSimulation();
 clear functions;
