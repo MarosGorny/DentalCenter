@@ -22,7 +22,7 @@ classdef Clinic < handle
             obj = obj.generateNextArrival();  % Schedule the first patient arrival
 
             % Add random urgent patients
-            urgentPatientsCount = randi([6, 10]);
+            urgentPatientsCount = 0 %randi([6, 10]);
            urgentTimes = sort(randi(totalSimulationTime-1, urgentPatientsCount, 1));
 
             for i = 1:urgentPatientsCount
@@ -39,27 +39,39 @@ classdef Clinic < handle
 
         function obj = runSimulation(obj)
 
-            while ~isempty(obj.clinicEvents) && obj.clinicEvents(1).time <= obj.totalSimulationTime
-                
+            while ~isempty(obj.clinicEvents)
                 % Get the next event
                 nextEvent = obj.clinicEvents(1);
                 obj.clinicEvents(1) = []; % Remove the event from the queue
-                obj.currentTime = nextEvent.time;
-
-                % Handle the event based on its type
-                obj.eventHandler(nextEvent);
+            
+                if (nextEvent.time >= obj.totalSimulationTime)
+                    if (strcmp(nextEvent.type, 'startTreatment') || strcmp(nextEvent.type, 'arrival'))
+                        % Change currentTime, but don't handle the event.
+                        obj.currentTime = nextEvent.time;
+                    else
+                        % Change currentTime, and handle the endTreatmentEvent
+                        obj.currentTime = nextEvent.time;
+                        obj.eventHandler(nextEvent);
+                    end
+                else
+                    obj.currentTime = nextEvent.time;
+            
+                    % Handle the event based on its type
+                    obj.eventHandler(nextEvent);
+                end
             end
         end
 
         function obj = eventHandler(obj, event)
             switch event.type
-                case 'arrival'
-                    obj = obj.handleArrival(event.patient);
+                case 'arrival'                    
                     disp(['Patient ',num2str(event.patient.id) ,' arrived at ', num2str(event.patient.arrivalTime)]);
                     if(event.patient.isUrgent)
                         disp(["   URGENT!!!"])
                     end
+                    obj = obj.handleArrival(event.patient);
                 case 'startTreatment'
+                    
                     event.doctor = event.doctor.treatPatient(event.patient, obj.currentTime);
                     disp(['Doctor ',  int2str(int64(event.doctor.id)), ' started treatment at ', num2str(obj.currentTime)]);
                     disp(['   PatientID:',int2str(int64(event.patient.id)), ' TT: ', int2str(event.patient.departureTime - event.patient.startTime), '   C: ',  int2str(int8(event.patient.hasComplication))]);
@@ -67,11 +79,14 @@ classdef Clinic < handle
                         disp(["   URGENT!!!"])
                     end
 
+
                     endTreatmentEvent = Event.createEndTreatment(event.patient.departureTime, event.patient, event.doctor);
                     obj.clinicEvents = [obj.clinicEvents, endTreatmentEvent];
                 case 'endTreatment'
-                    event.doctor = event.doctor.finishTreatment();
+                    
                     disp(['Doctor ', num2str(event.doctor.id), ' finished treatment at ', num2str(obj.currentTime)]);
+                    event.doctor = event.doctor.finishTreatment();
+
                     if ~isempty(obj.urgentQueue)
                         nextPatient = obj.urgentQueue(1);
                         obj.urgentQueue(1) = [];  % Remove this patient from the urgent queue
@@ -107,7 +122,8 @@ classdef Clinic < handle
             else
                % If a doctor is available, start treatment immediately
                 startTreatmentEvent = Event.createStartTreatment(obj.currentTime, patient, obj.doctors(freeDoctor));
-                obj.clinicEvents = [obj.clinicEvents, startTreatmentEvent]; 
+                obj.eventHandler(startTreatmentEvent);
+
             end
         
             % Generate the next arrival event for non urgent patient
@@ -121,15 +137,17 @@ classdef Clinic < handle
             % Calculate the time for the next patient's arrival
             interArrivalTime = 25;  % Assuming fixed inter-arrival time for simplicity
             nextArrivalTime = obj.currentTime + interArrivalTime;
-        
-            % Create the next patient
-            nextPatient = Patient(nextArrivalTime);
-        
-            % Create an arrival event for the next patient using the Event class method
-            nextArrivalEvent = Event.createArrival(nextArrivalTime, nextPatient);
-        
-            % Add the event to the clinic's event queue
-            obj.clinicEvents = [obj.clinicEvents, nextArrivalEvent];        
+
+            if(nextArrivalTime < obj.totalSimulationTime)
+                % Create the next patient
+                nextPatient = Patient(nextArrivalTime);
+            
+                % Create an arrival event for the next patient using the Event class method
+                nextArrivalEvent = Event.createArrival(nextArrivalTime, nextPatient);
+            
+                % Add the event to the clinic's event queue
+                obj.clinicEvents = [obj.clinicEvents, nextArrivalEvent];  
+            end
         end
     end
 end
