@@ -7,6 +7,8 @@ classdef SimulationManager < handle
         doctorCount; % Number of doctors
         finalAverageWaitingTime; % Final computed average waiting time
         finalDoctorUtilizations; % Final computed doctor utilizations
+
+        finalQueueLengthHistory; % Store queue length histories from each experiment
     end
     
     methods
@@ -16,6 +18,7 @@ classdef SimulationManager < handle
             obj.doctorCount = simulationParams.numDoctors;
             obj.averageWaitingTimes = zeros(1, numExperiments); % Preallocate for speed
             obj.doctorUtilizationsSums = zeros(obj.doctorCount, numExperiments); % Each column represents a doctor's total utilization across all experiments
+            obj.finalQueueLengthHistory = cell(1, numExperiments); % Initialize as a cell array
         end
         
         function runExperiments(obj)
@@ -25,7 +28,7 @@ classdef SimulationManager < handle
                 clinic.generateScheduledArrivals(obj.simulationParams.scenarioNumber, obj.simulationParams.patientsPerInterval, obj.simulationParams.appointmentInterval, obj.simulationParams.endBuffer);
                 clinic.runSimulation();
 
-                clinic.statsManager.displayStatistics(obj.simulationParams.totalSimulationTime);
+                %clinic.statsManager.displayStatistics(obj.simulationParams.totalSimulationTime);
 
 
                 stats = clinic.getResults(); % Assuming getResults returns the statistics directly
@@ -33,6 +36,7 @@ classdef SimulationManager < handle
                 % Record the results
                 obj.averageWaitingTimes(i) = stats.AverageWaitingTime;
                 obj.doctorUtilizationsSums(:, i) = stats.DoctorUtilizations;
+                obj.finalQueueLengthHistory{i} = stats.QueueLengthHistory; % Store each history in a cell
             end
             
             obj.calculateFinalResults();
@@ -48,7 +52,8 @@ classdef SimulationManager < handle
         function results = getFinalResults(obj)
             results = struct(...
                 'AverageWaitingTime', obj.finalAverageWaitingTime, ...
-                'DoctorUtilizations', obj.finalDoctorUtilizations ...
+                'DoctorUtilizations', obj.finalDoctorUtilizations, ...
+                'QueueLengthHistory', obj.finalQueueLengthHistory ...
             );
             return;
         end
