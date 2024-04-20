@@ -57,6 +57,11 @@ classdef SimulationManager < handle
             );
             return;
         end
+
+        function result = getDoctorsUtilization(obj)
+            result = obj.doctorUtilizationsSums;
+            return;
+        end
         
         function displayResults(obj)
             % Displaying a header with experiment details
