@@ -8,6 +8,7 @@ classdef Doctor < handle
         isBusy = false;     % Boolean indicating if the doctor is currently treating a patient
         currentPatient = Patient.empty;  % Current patient under treatment, if any
         totalWorkingTime = 0;  % Cumulative time spent treating patients, in minutes
+        priority = 0;
     end
 
     methods
