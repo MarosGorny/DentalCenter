@@ -119,8 +119,10 @@ classdef Clinic < handle
         end
 
         function obj = handleArrival(obj, patient)
-            % Determine if a doctor is available or add to queue
-            freeDoctor = find([obj.doctors.isBusy] == false, 1);
+            % Select strategy: 'random', 'priority', 'circular', or 'minWorkload'
+            strategy = 'minWorkload';  % Change as needed
+            [freeDoctor, doctorIndex] = obj.assignDoctor(strategy);
+
             if isempty(freeDoctor)
                 % Sort patients into appropriate queues
                 if patient.isUrgent
@@ -130,7 +132,7 @@ classdef Clinic < handle
                 end
             else
                % If a doctor is available, start treatment immediately
-                startTreatmentEvent = Event.createStartTreatment(obj.currentTime, patient, obj.doctors(freeDoctor));
+                startTreatmentEvent = Event.createStartTreatment(obj.currentTime, patient, obj.doctors(doctorIndex));
                 obj.eventHandler(startTreatmentEvent);
 
             end
@@ -234,6 +236,49 @@ classdef Clinic < handle
             obj.clinicEvents = obj.clinicEvents(idx);
         end
 
+        function [doctor, doctorIndex] = assignDoctor(obj, strategy)
+            availableDoctors = find(~[obj.doctors.isBusy]);  % Indices of available doctors
+            
+            if isempty(availableDoctors)
+                doctor = [];  % No doctor is available
+                doctorIndex = [];  % No index to return
+                return;
+            end
+            
+            switch strategy
+                case 'random'
+                    % Randomly choose one of the available doctors
+                    idx = randi(length(availableDoctors));
+                    doctorIndex = availableDoctors(idx);
+                    doctor = obj.doctors(doctorIndex);
+                
+                case 'priority'
+                    % Sorting available doctors by priority (highest first) and pick the first one
+                    [~, idx] = sort([obj.doctors(availableDoctors).priority], 'descend');
+                    doctorIndex = availableDoctors(idx(1));
+                    doctor = obj.doctors(doctorIndex);
+                
+                case 'circular'
+                    % Circular selection from available doctors
+                    obj.lastAssignedDoctorIndex = mod(obj.lastAssignedDoctorIndex, length(availableDoctors)) + 1;
+                    doctorIndex = availableDoctors(obj.lastAssignedDoctorIndex);
+                    doctor = obj.doctors(doctorIndex);
+                
+                case 'minWorkload'
+                    % Select the doctor with the minimum total working time
+                    [~, idx] = min([obj.doctors(availableDoctors).totalWorkingTime]);
+                    doctorIndex = availableDoctors(idx);
+                    doctor = obj.doctors(doctorIndex);
+                
+                otherwise
+                    error('Unknown doctor assignment strategy');
+                    doctor = [];  % Error case, no doctor
+                    doctorIndex = [];  % Error case, no index
+            end
+        end
+        
+                        
+
         function displayStatistics(obj)
             % Calculate and display the average waiting time
             totalWaitingTime = sum([obj.patients.waitingTime]);
@@ -250,6 +295,7 @@ classdef Clinic < handle
         function displayResults(obj)
             for i = 1:numel(obj.doctors)
                  obj.statsManager.updateDoctorUtilization(obj.doctors(i).id, obj.doctors(i).totalWorkingTime)
+
             end            
            
 
