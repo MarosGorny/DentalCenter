@@ -23,6 +23,24 @@ classdef StatisticsManager < handle
         function updateDoctorUtilization(obj, doctorId, timeSpent)
             obj.doctorUtilizations(doctorId) = obj.doctorUtilizations(doctorId) + timeSpent;
         end
+
+        % Calculate statistics and return them
+        function stats = calculateStatistics(obj, totalSimulationTime)
+            obj.cleanUpQueueHistory();
+            
+            averageWaitingTime = 0;
+            if obj.totalPatients > 0
+                averageWaitingTime = obj.totalWaitingTime / obj.totalPatients;
+            end
+
+            doctorUtilizationsStat = (obj.doctorUtilizations / totalSimulationTime) * 100;
+            
+            stats = struct(...
+                'AverageWaitingTime', averageWaitingTime, ...
+                'DoctorUtilizations', doctorUtilizationsStat, ...
+                'QueueLengthHistory', obj.queueLengthHistory ...
+            );
+        end
         
         function plotQueueLength(obj)
             figure;
@@ -93,9 +111,35 @@ classdef StatisticsManager < handle
             hold off;
         end
 
+        function cleanUpQueueHistory(obj)
+            if isempty(obj.queueLengthHistory)
+                return;  % No data to clean up
+            end
+        
+            % Initialize variables
+            uniqueTimes = unique(obj.queueLengthHistory(:,1));
+            newQueueLengthHistory = zeros(length(uniqueTimes), 2);
+        
+            % Loop through each unique time
+            for i = 1:length(uniqueTimes)
+                time = uniqueTimes(i);
+                % Find all indices where this time occurs
+                indices = find(obj.queueLengthHistory(:,1) == time);
+                % Take the last index (which corresponds to the last record for this time)
+                lastIdx = indices(end);
+                % Save the time and the corresponding last queue length
+                newQueueLengthHistory(i,:) = obj.queueLengthHistory(lastIdx,:);
+            end
+        
+            % Replace the old history with the cleaned up version
+            obj.queueLengthHistory = newQueueLengthHistory;
+        end
 
 
         function displayStatistics(obj, totalSimulationTime)
+            % Clean up the queue history to ensure accuracy
+            obj.cleanUpQueueHistory();
+
             if obj.totalPatients > 0
                 averageWaitingTime = obj.totalWaitingTime / obj.totalPatients;
                 disp(['Average Waiting Time: ', num2str(averageWaitingTime), ' minutes']);
@@ -107,7 +151,6 @@ classdef StatisticsManager < handle
             end
             
             obj.plotQueueLength();
-            obj.queueLengthHistory
             obj.plotDoctorUtilization(totalSimulationTime);
         end
     end

@@ -16,6 +16,7 @@ myClinic = Clinic(4,60);
             %myClinic.generateScheduledArrivals(3, 3, 50,0);  
 
 myClinic.runSimulation();
+stats = myClinic.getResults();
 myClinic.displayResults();
 
 clear functions;

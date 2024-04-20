@@ -66,6 +66,9 @@ classdef Clinic < handle
                     obj.eventHandler(nextEvent);
                 end
             end
+            for i = 1:numel(obj.doctors)
+                 obj.statsManager.updateDoctorUtilization(obj.doctors(i).id, obj.doctors(i).totalWorkingTime)
+            end            
         end
 
         function obj = eventHandler(obj, event)
@@ -275,31 +278,16 @@ classdef Clinic < handle
                     doctor = [];  % Error case, no doctor
                     doctorIndex = [];  % Error case, no index
             end
-        end
-        
-                        
-
-        function displayStatistics(obj)
-            % Calculate and display the average waiting time
-            totalWaitingTime = sum([obj.patients.waitingTime]);
-            averageWaitingTime = totalWaitingTime / numel(obj.patients);
-            disp(['Average Waiting Time: ', num2str(averageWaitingTime), ' minutes']);
-        
-            % Calculate and display the utilization for each doctor
-            for i = 1:numel(obj.doctors)
-                utilizationPercentage = (obj.doctors(i).totalWorkingTime / obj.totalSimulationTime) * 100;
-                disp(['Doctor ', num2str(obj.doctors(i).id), ' Utilization: ', num2str(utilizationPercentage), '%']);
-            end
-        end
+        end                             
 
         function displayResults(obj)
-            for i = 1:numel(obj.doctors)
-                 obj.statsManager.updateDoctorUtilization(obj.doctors(i).id, obj.doctors(i).totalWorkingTime)
-
-            end            
-           
-
+            % Display results
             obj.statsManager.displayStatistics(obj.totalSimulationTime);
+        end
+
+        function stats = getResults(obj)
+            % Calculate statistics
+            stats = obj.statsManager.calculateStatistics(obj.totalSimulationTime);
         end
 
     end
