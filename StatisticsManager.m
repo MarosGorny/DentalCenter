@@ -1,32 +1,36 @@
 classdef StatisticsManager < handle
     properties
-        queueLengthHistory = []; % Store [time, queueLength] pairs
-        totalWaitingTime = 0;
-        totalPatients = 0;
-        doctorUtilizations; % Array to store total working time for each doctor
+        queueLengthHistory = []; % Stores pairs of [time, queueLength] to track queue length changes
+        totalWaitingTime = 0;    % Sum of all waiting times to calculate the average
+        totalPatients = 0;       % Count of all patients to calculate the average waiting time
+        doctorUtilizations;      % Array to store total working time for each doctor
     end
     
-    methods (Access =public)
+    methods
+        % Constructor to initialize the manager with the number of doctors
         function obj = StatisticsManager(numDoctors)
             obj.doctorUtilizations = zeros(numDoctors, 1);
         end
         
+        % Logs the current queue length at a specific time
         function logQueueLength(obj, currentTime, queueLength)
             obj.queueLengthHistory = [obj.queueLengthHistory; [currentTime, queueLength]];
         end
         
+        % Logs the waiting time for a patient to calculate the average later
         function logWaitingTime(obj, waitingTime)
             obj.totalWaitingTime = obj.totalWaitingTime + waitingTime;
             obj.totalPatients = obj.totalPatients + 1;
         end
         
+        % Updates the utilization time for a specified doctor
         function updateDoctorUtilization(obj, doctorId, timeSpent)
             obj.doctorUtilizations(doctorId) = obj.doctorUtilizations(doctorId) + timeSpent;
         end
 
-        % Calculate statistics and return them
+        % Calculates key statistics from the data collected during the simulation
         function stats = calculateStatistics(obj, totalSimulationTime)
-            obj.cleanUpQueueHistory();
+            obj.cleanUpQueueHistory();  % Ensure only unique, final entries for each time point
             
             averageWaitingTime = 0;
             if obj.totalPatients > 0
@@ -42,6 +46,7 @@ classdef StatisticsManager < handle
             );
         end
         
+        % Plots the history of the queue length as a staircase graph
         function plotQueueLength(obj)
             figure;
             stairs(obj.queueLengthHistory(:,1), obj.queueLengthHistory(:,2), 'LineWidth', 2);
@@ -50,14 +55,14 @@ classdef StatisticsManager < handle
             ylabel('Number of Patients in Queue');
             grid on;
             
-            % Determine the range of queue lengths to set y-axis ticks appropriately
             if ~isempty(obj.queueLengthHistory)
                 maxY = max(obj.queueLengthHistory(:,2));
-                yticks(0:maxY); % Set y-ticks to only include integers up to the maximum queue length
-            end            
+                yticks(0:maxY);  % Only show whole number ticks
+            end
         end
 
-        function plotDoctorUtilization(obj, totalSimulationTime)
+        % Plots the utilization of each doctor as a colored bar graph
+       function plotDoctorUtilization(obj, totalSimulationTime)
             utilizationPercentages = (obj.doctorUtilizations / totalSimulationTime) * 100;
             figure;
         
@@ -111,45 +116,37 @@ classdef StatisticsManager < handle
             hold off;
         end
 
+
+        % Cleans up the queue length history to ensure only the last entry per unique time is kept
         function cleanUpQueueHistory(obj)
             if isempty(obj.queueLengthHistory)
-                return;  % No data to clean up
+                return;
             end
-        
-            % Initialize variables
+
+            % Aggregate to the latest entry per unique timestamp
             uniqueTimes = unique(obj.queueLengthHistory(:,1));
             newQueueLengthHistory = zeros(length(uniqueTimes), 2);
-        
-            % Loop through each unique time
+
             for i = 1:length(uniqueTimes)
-                time = uniqueTimes(i);
                 % Find all indices where this time occurs
-                indices = find(obj.queueLengthHistory(:,1) == time);
+                indices = find(obj.queueLengthHistory(:,1) == uniqueTimes(i));
                 % Take the last index (which corresponds to the last record for this time)
                 lastIdx = indices(end);
-                % Save the time and the corresponding last queue length
+                % Save the time and the corresponding last queue length 
                 newQueueLengthHistory(i,:) = obj.queueLengthHistory(lastIdx,:);
             end
-        
-            % Replace the old history with the cleaned up version
+
             obj.queueLengthHistory = newQueueLengthHistory;
         end
 
-
+        % Displays the calculated statistics and plots the graphs
         function displayStatistics(obj, totalSimulationTime)
-            % Clean up the queue history to ensure accuracy
-            obj.cleanUpQueueHistory();
-
-            if obj.totalPatients > 0
-                averageWaitingTime = obj.totalWaitingTime / obj.totalPatients;
-                disp(['Average Waiting Time: ', num2str(averageWaitingTime), ' minutes']);
+            disp(['Average Waiting Time: ', num2str(obj.calculateStatistics(totalSimulationTime).AverageWaitingTime), ' minutes']);
+            disp('Doctor Utilizations: ');
+            utilizations = obj.calculateStatistics(totalSimulationTime).DoctorUtilizations;
+            for i = 1:numel(utilizations)
+                disp(['Doctor ', num2str(i), ': ', num2str(utilizations(i), '%.2f'), '%']);
             end
-            
-            for i = 1:length(obj.doctorUtilizations)
-                utilization = (obj.doctorUtilizations(i) / totalSimulationTime) * 100;
-                disp(['Doctor ', num2str(i), ' Utilization: ', num2str(utilization), '%']);
-            end
-            
             obj.plotQueueLength();
             obj.plotDoctorUtilization(totalSimulationTime);
         end

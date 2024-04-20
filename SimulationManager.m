@@ -24,6 +24,10 @@ classdef SimulationManager < handle
                 clinic = Clinic(obj.simulationParams.numDoctors, obj.simulationParams.totalSimulationTime);
                 clinic.generateScheduledArrivals(obj.simulationParams.scenarioNumber, obj.simulationParams.patientsPerInterval, obj.simulationParams.appointmentInterval, obj.simulationParams.endBuffer);
                 clinic.runSimulation();
+
+                clinic.statsManager.displayStatistics(obj.simulationParams.totalSimulationTime);
+
+
                 stats = clinic.getResults(); % Assuming getResults returns the statistics directly
 
                 % Record the results
