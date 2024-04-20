@@ -10,11 +10,19 @@ classdef Clinic < handle
         totalSimulationTime;        % Total time for which the simulation runs
         
         statsManager;               % StatisticsManager object to handle stats
+        information;
     end
 
     methods
         function obj = Clinic(numDoctors, totalSimulationTime)
             % Constructor for Clinic class
+            % Initialize an empty table with predefined variables
+            information = table(...
+                'Size', [0, 7], ...
+                'VariableTypes', {'int32', 'string', 'string', 'string', 'logical', 'logical', 'int32'}, ...
+                'VariableNames', {'time', 'type', 'doctor', 'patient', 'complication', 'urgent', 'queueSize'});
+
+
             obj.totalSimulationTime = totalSimulationTime;
             obj.doctors = Doctor.empty(numDoctors, 0);
             obj.statsManager = StatisticsManager(numDoctors);
@@ -61,6 +69,8 @@ classdef Clinic < handle
             % Handle different types of events
             switch event.type
                 case 'arrival'
+                    newRow = {event.time,'Arrival','-', num2str(event.patient.id), event.patient.hasComplication, event.patient.isUrgent, length(obj.regularQueue) + length(obj.urgentQueue)};
+                    obj.information = [obj.information; newRow];
                     disp(['Patient ', num2str(event.patient.id), ' arrived at ', num2str(event.patient.arrivalTime)]);
                     if event.patient.isUrgent
                         disp('   URGENT!!!');
@@ -71,6 +81,10 @@ classdef Clinic < handle
                 case 'startTreatment'
                     event.doctor.treatPatient(event.patient, obj.currentTime);
                     obj.statsManager.logWaitingTime(event.patient.waitingTime);
+
+                    newRow = {event.time,'StartTreatment',num2str(event.doctor.id), num2str(event.patient.id), event.patient.hasComplication, event.patient.isUrgent, length(obj.regularQueue) + length(obj.urgentQueue)};
+                    obj.information = [obj.information; newRow];
+
                     disp(['Doctor ', num2str(event.doctor.id), ' started treatment at ', num2str(obj.currentTime)]);
                     disp(['   PatientID:', num2str(event.patient.id), ' TT: ', num2str(event.patient.departureTime - event.patient.startTime), '   C: ', num2str(event.patient.hasComplication)]);
                     if event.patient.isUrgent
@@ -82,6 +96,9 @@ classdef Clinic < handle
                     obj.statsManager.logQueueLength(obj.currentTime, length(obj.regularQueue) + length(obj.urgentQueue));
 
                 case 'endTreatment'
+                    newRow = {event.time,'EndTreatment',num2str(event.doctor.id), num2str(event.patient.id), event.patient.hasComplication, event.patient.isUrgent, length(obj.regularQueue) + length(obj.urgentQueue)};
+                    obj.information = [obj.information; newRow];
+
                     disp(['Doctor ', num2str(event.doctor.id), ' finished treatment at ', num2str(obj.currentTime)]);
                     event.doctor.finishTreatment();
 
@@ -232,6 +249,10 @@ classdef Clinic < handle
         function displayResults(obj)
             % Display the results of the simulation
             obj.statsManager.displayStatistics(obj.totalSimulationTime);
+        end
+
+        function info = getInformation(obj)
+            info = obj.information;
         end
 
         function stats = getResults(obj)

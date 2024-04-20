@@ -9,6 +9,8 @@ classdef SimulationManager < handle
         finalDoctorUtilizations; % Final computed doctor utilizations
 
         finalQueueLengthHistory; % Store queue length histories from each experiment
+
+        informationOfExperiments;
     end
     
     methods
@@ -19,6 +21,8 @@ classdef SimulationManager < handle
             obj.averageWaitingTimes = zeros(1, numExperiments); % Preallocate for speed
             obj.doctorUtilizationsSums = zeros(obj.doctorCount, numExperiments); % Each column represents a doctor's total utilization across all experiments
             obj.finalQueueLengthHistory = cell(1, numExperiments); % Initialize as a cell array
+
+            obj.informationOfExperiments = cell(1, numExperiments);
         end
         
         function runExperiments(obj)
@@ -32,6 +36,7 @@ classdef SimulationManager < handle
 
 
                 stats = clinic.getResults(); % Assuming getResults returns the statistics directly
+                obj.informationOfExperiments{i} = clinic.getInformation();
 
                 % Record the results
                 obj.averageWaitingTimes(i) = stats.AverageWaitingTime;
@@ -62,6 +67,11 @@ classdef SimulationManager < handle
             result = obj.doctorUtilizationsSums;
             return;
         end
+
+        function information = getInformation(obj)
+            information = obj.informationOfExperiments;
+            return;
+        end;
         
         function displayResults(obj)
             % Displaying a header with experiment details
