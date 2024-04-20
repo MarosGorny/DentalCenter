@@ -3,6 +3,7 @@ classdef Doctor < handle
         id;
         isBusy = false;               % Indicates if the doctor is currently busy
         currentPatient = Patient.empty;  % The patient currently being treated, if any
+        totalWorkingTime = 0; % Total minutes spent treating patients
     end
     methods
         function obj = Doctor()
@@ -13,6 +14,7 @@ classdef Doctor < handle
             obj.isBusy = true;
             obj.currentPatient = patient;
             patient.startTime = currentTime;
+            patient.waitingTime = patient.startTime - patient.arrivalTime;
 
             % Determine treatment duration based on whether there are complications
             treatmentDuration = randi([20, 30]);  % Standard treatment time in minutes
@@ -20,6 +22,7 @@ classdef Doctor < handle
                 treatmentDuration = randi([40, 60]); % Extended time if complication occured
             end
             patient.departureTime = currentTime + treatmentDuration;
+            obj.totalWorkingTime = obj.totalWorkingTime + (patient.departureTime - currentTime);
         end
         function obj = finishTreatment(obj)
             obj.isBusy = false;

@@ -3,6 +3,7 @@ classdef Patient < handle
         id;
         arrivalTime;          % Time the patient arrives
         startTime;            % Time treatment starts
+        waitingTime;
         departureTime;        % Time treatment finishes
         hasComplication = false;  % Whether the treatment involves complications
         isUrgent = false;     % Whether the patient is an urgent case
