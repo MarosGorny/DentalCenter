@@ -6,9 +6,12 @@ classdef Doctor < handle
         totalWorkingTime = 0; % Total minutes spent treating patients
     end
     methods
-        function obj = Doctor()
-            obj.id = Doctor.getNextId(); % Assign and increment ID
+        function obj = Doctor(id)
+            obj.id = id; % Assign the doctor ID based on the input
         end
+        % function obj = Doctor()
+        %     obj.id = Doctor.getNextId(); % Assign and increment ID
+        % end
 
         function obj = treatPatient(obj, patient, currentTime)
             obj.isBusy = true;

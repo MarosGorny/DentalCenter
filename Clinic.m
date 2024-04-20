@@ -20,7 +20,7 @@ classdef Clinic < handle
             obj.statsManager = StatisticsManager(numDoctors);
 
             for i = 1:numDoctors
-                obj.doctors(i) = Doctor(); % Create a new Doctor instance for each element
+                obj.doctors(i) = Doctor(i); % Create a new Doctor instance for each element
             end
 
             % Initialize the simulation by generating the first arrival
