@@ -8,8 +8,8 @@ classdef Clinic < handle
 
         currentTime = 0;
         totalSimulationTime;
-
-        queueLengthHistory;
+        
+        statsManager;
 
     end
     methods
@@ -17,6 +17,7 @@ classdef Clinic < handle
             
             obj.totalSimulationTime = totalSimulationTime;
             obj.doctors = Doctor.empty(numDoctors, 0); % Initialize an empty array of Doctor objects
+            obj.statsManager = StatisticsManager(numDoctors);
 
             for i = 1:numDoctors
                 obj.doctors(i) = Doctor(); % Create a new Doctor instance for each element
@@ -27,7 +28,7 @@ classdef Clinic < handle
             %obj = obj.generateNextArrival();  % Schedule the first patient arrival
 
             % Add random urgent patients
-            urgentPatientsCount = 0; randi([6, 10]);
+            urgentPatientsCount = 0;% randi([6, 10]);
            urgentTimes = sort(randi(totalSimulationTime-1, urgentPatientsCount, 1));
 
             for i = 1:urgentPatientsCount
@@ -73,23 +74,23 @@ classdef Clinic < handle
                 case 'arrival'                    
                     disp(['Patient ',num2str(event.patient.id) ,' arrived at ', num2str(event.patient.arrivalTime)]);
                     if(event.patient.isUrgent)
-                        disp(["   URGENT!!!"])
+                        disp("   URGENT!!!")
                     end
                     obj = obj.handleArrival(event.patient);
-                    obj.queueLengthHistory = [obj.queueLengthHistory; [obj.currentTime, length(obj.regularQueue) + length(obj.urgentQueue)]];
+                                        obj.statsManager.logQueueLength(obj.currentTime,length(obj.regularQueue) + length(obj.urgentQueue));
                 case 'startTreatment'
                     
                     event.doctor = event.doctor.treatPatient(event.patient, obj.currentTime);
+                    obj.statsManager.logWaitingTime(event.patient.waitingTime);                   
                     disp(['Doctor ',  int2str(int64(event.doctor.id)), ' started treatment at ', num2str(obj.currentTime)]);
                     disp(['   PatientID:',int2str(int64(event.patient.id)), ' TT: ', int2str(event.patient.departureTime - event.patient.startTime), '   C: ',  int2str(int8(event.patient.hasComplication))]);
                     if(event.patient.isUrgent)
-                        disp(["   URGENT!!!"])
+                        disp("   URGENT!!!")
                     end
 
                     endTreatmentEvent = Event.createEndTreatment(event.patient.departureTime, event.patient, event.doctor);
                     obj.clinicEvents = [obj.clinicEvents, endTreatmentEvent];
-
-                    obj.queueLengthHistory = [obj.queueLengthHistory; [obj.currentTime, length(obj.regularQueue) + length(obj.urgentQueue)]];
+                    obj.statsManager.logQueueLength(obj.currentTime,length(obj.regularQueue) + length(obj.urgentQueue));
                 case 'endTreatment'
                     
                     disp(['Doctor ', num2str(event.doctor.id), ' finished treatment at ', num2str(obj.currentTime)]);
@@ -244,6 +245,15 @@ classdef Clinic < handle
                 utilizationPercentage = (obj.doctors(i).totalWorkingTime / obj.totalSimulationTime) * 100;
                 disp(['Doctor ', num2str(obj.doctors(i).id), ' Utilization: ', num2str(utilizationPercentage), '%']);
             end
+        end
+
+        function displayResults(obj)
+            for i = 1:numel(obj.doctors)
+                 obj.statsManager.updateDoctorUtilization(obj.doctors(i).id, obj.doctors(i).totalWorkingTime)
+            end            
+           
+
+            obj.statsManager.displayStatistics(obj.totalSimulationTime);
         end
 
     end

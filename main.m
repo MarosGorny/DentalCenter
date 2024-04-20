@@ -3,9 +3,9 @@ clear functions;
 
 % Create a clinic instance with doctors and totalSimulationTime
 %myClinic = Clinic(1,6*60);
-myClinic = Clinic(1,120);
+myClinic = Clinic(4,120);
             %Scenario 1, 3 patients, every 30 min, with 0 endbuffer
-            myClinic.generateScheduledArrivals(1,1,28,0);
+            myClinic.generateScheduledArrivals(1,2,30,0);
 
             %Scenario 2, alternating patients 4 and 3, every 30 min, 
             % with 0 endbuffer           
@@ -16,6 +16,6 @@ myClinic = Clinic(1,120);
             %myClinic.generateScheduledArrivals(3, 3, 50,0);  
 
 myClinic.runSimulation();
-myClinic.displayStatistics();
+myClinic.displayResults();
 
 clear functions;
