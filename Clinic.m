@@ -35,7 +35,7 @@ classdef Clinic < handle
             urgentPatientsCount = randi([6, 10]);
             urgentTimes = sort(randi(totalSimulationTime - 1, urgentPatientsCount, 1));
             for i = 1:urgentPatientsCount
-                urgentPatient = Patient(urgentTimes(i), true);
+                urgentPatient = Patient(urgentTimes(i),-i, true);
                 urgentEvent = Event.createArrival(urgentTimes(i), urgentPatient);
                 obj.clinicEvents = [obj.clinicEvents, urgentEvent];
             end
@@ -71,10 +71,7 @@ classdef Clinic < handle
                 case 'arrival'
                     newRow = {event.time,'Arrival','-', num2str(event.patient.id), event.patient.hasComplication, event.patient.isUrgent, length(obj.regularQueue) + length(obj.urgentQueue)};
                     obj.information = [obj.information; newRow];
-                    disp(['Patient ', num2str(event.patient.id), ' arrived at ', num2str(event.patient.arrivalTime)]);
-                    if event.patient.isUrgent
-                        disp('   URGENT!!!');
-                    end
+
                     obj.handleArrival(event.patient);
                     obj.statsManager.logQueueLength(obj.currentTime, length(obj.regularQueue) + length(obj.urgentQueue));
 
@@ -85,12 +82,6 @@ classdef Clinic < handle
                     newRow = {event.time,'StartTreatment',num2str(event.doctor.id), num2str(event.patient.id), event.patient.hasComplication, event.patient.isUrgent, length(obj.regularQueue) + length(obj.urgentQueue)};
                     obj.information = [obj.information; newRow];
 
-                    disp(['Doctor ', num2str(event.doctor.id), ' started treatment at ', num2str(obj.currentTime)]);
-                    disp(['   PatientID:', num2str(event.patient.id), ' TT: ', num2str(event.patient.departureTime - event.patient.startTime), '   C: ', num2str(event.patient.hasComplication)]);
-                    if event.patient.isUrgent
-                        disp('   URGENT!!!');
-                    end
-
                     endTreatmentEvent = Event.createEndTreatment(event.patient.departureTime, event.patient, event.doctor);
                     obj.clinicEvents = [obj.clinicEvents, endTreatmentEvent];
                     obj.statsManager.logQueueLength(obj.currentTime, length(obj.regularQueue) + length(obj.urgentQueue));
@@ -99,7 +90,6 @@ classdef Clinic < handle
                     newRow = {event.time,'EndTreatment',num2str(event.doctor.id), num2str(event.patient.id), event.patient.hasComplication, event.patient.isUrgent, length(obj.regularQueue) + length(obj.urgentQueue)};
                     obj.information = [obj.information; newRow];
 
-                    disp(['Doctor ', num2str(event.doctor.id), ' finished treatment at ', num2str(obj.currentTime)]);
                     event.doctor.finishTreatment();
 
                     % Check for next patient in queue
@@ -153,6 +143,7 @@ classdef Clinic < handle
             % `endBuffer` specifies a no-arrival period at the end of the simulation.
             
             variability = 10; % +/- variability in minutes
+            id = 1;
         
             finalArrivalTime = obj.totalSimulationTime - endBuffer;  % Time after which no new patients are scheduled.
         
@@ -163,7 +154,8 @@ classdef Clinic < handle
                         for p = 1:patientsPerInterval
                             actualTime = max(0, scheduledTime + randi([-variability, variability], 1, 1)); % Ensure non-negative times.
                             if actualTime < finalArrivalTime
-                                patient = Patient(actualTime);
+                                patient = Patient(actualTime,id);
+                                id = id + 1;
                                 arrivalEvent = Event.createArrival(actualTime, patient);
                                 obj.clinicEvents = [obj.clinicEvents, arrivalEvent];
                             end
@@ -180,7 +172,8 @@ classdef Clinic < handle
                         for p = 1:numPatients
                             actualTime = max(0, interval + randi([-variability, variability], 1, 1));
                             if actualTime < finalArrivalTime
-                                patient = Patient(actualTime);
+                                patient = Patient(actualTime,id);
+                                id = id + 1;
                                 arrivalEvent = Event.createArrival(actualTime, patient);
                                 obj.clinicEvents = [obj.clinicEvents, arrivalEvent];
                             end
@@ -196,7 +189,8 @@ classdef Clinic < handle
                             scheduledTime = interval + i * timeStep;
                             actualTime = max(0, round(scheduledTime) + randi([-variability, variability], 1, 1));
                             if actualTime < finalArrivalTime
-                                patient = Patient(actualTime);
+                                patient = Patient(actualTime,id);
+                                id = id + 1;
                                 arrivalEvent = Event.createArrival(actualTime, patient);
                                 obj.clinicEvents = [obj.clinicEvents, arrivalEvent];
                             end

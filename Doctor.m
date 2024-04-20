@@ -46,18 +46,4 @@ classdef Doctor < handle
         end
     end
 
-    methods (Static)
-        function id = getNextId()
-            % Static method to retrieve the next unique ID for a new doctor.
-            % Returns:
-            %   id - A unique identifier for the doctor
-
-            persistent nextId;
-            if isempty(nextId)
-                nextId = 1; % Initialize the first ID
-            end
-            id = nextId;
-            nextId = nextId + 1; % Increment the ID for the next use
-        end
-    end
 end
