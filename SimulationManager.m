@@ -11,10 +11,13 @@ classdef SimulationManager < handle
         finalQueueLengthHistory; % Store queue length histories from each experiment
 
         informationOfExperiments;
+
+        selectionStrategy;
+        priorites;
     end
     
     methods
-        function obj = SimulationManager(numExperiments, simulationParams)
+        function obj = SimulationManager(numExperiments, simulationParams, selectionStrategy, priorites)
             obj.numExperiments = numExperiments;
             obj.simulationParams = simulationParams;
             obj.doctorCount = simulationParams.numDoctors;
@@ -23,12 +26,14 @@ classdef SimulationManager < handle
             obj.finalQueueLengthHistory = cell(1, numExperiments); % Initialize as a cell array
 
             obj.informationOfExperiments = cell(1, numExperiments);
+            obj.selectionStrategy = selectionStrategy;
+            obj.priorites = priorites;
         end
         
         function runExperiments(obj)
             for i = 1:obj.numExperiments
                 fprintf('Running experiment %d\n', i);
-                clinic = Clinic(obj.simulationParams.numDoctors, obj.simulationParams.totalSimulationTime);
+                clinic = Clinic(obj.simulationParams.numDoctors, obj.simulationParams.totalSimulationTime,obj.selectionStrategy,obj.priorites);
                 clinic.generateScheduledArrivals(obj.simulationParams.scenarioNumber, obj.simulationParams.patientsPerInterval, obj.simulationParams.appointmentInterval, obj.simulationParams.endBuffer);
                 clinic.runSimulation();
 
@@ -71,7 +76,11 @@ classdef SimulationManager < handle
         function information = getInformation(obj)
             information = obj.informationOfExperiments;
             return;
-        end;
+        end
+        
+        function setPriorities(obj, priorites)
+            obj.priorites = priorites;
+        end
         
         function displayResults(obj)
             % Displaying a header with experiment details

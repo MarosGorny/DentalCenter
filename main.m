@@ -4,7 +4,8 @@ clear functions;
 params = struct('numDoctors', 4, 'totalSimulationTime', 600, ...
                 'scenarioNumber', 1, 'patientsPerInterval', 3, ...
                 'appointmentInterval', 30, 'endBuffer', 0);
-simManager = SimulationManager(10, params); % Run 10 experiments with the given parameters
+priorities = [1 2 3 4];
+simManager = SimulationManager(10, params,'minWorkLoad',priorities); % Run 10 experiments with the given parameters
 simManager.runExperiments();
 results = simManager.getFinalResults(); % Retrieve results as a structured array
 

@@ -11,17 +11,20 @@ classdef Clinic < handle
         
         statsManager;               % StatisticsManager object to handle stats
         information;
+
+        patientSelectionMethod;
     end
 
     methods
-        function obj = Clinic(numDoctors, totalSimulationTime)
+        function obj = Clinic(numDoctors, totalSimulationTime, patientSelection, doctorPriorities)
             % Constructor for Clinic class
             % Initialize an empty table with predefined variables
-            information = table(...
+            obj.information = table(...
                 'Size', [0, 7], ...
                 'VariableTypes', {'int32', 'string', 'string', 'string', 'logical', 'logical', 'int32'}, ...
                 'VariableNames', {'time', 'type', 'doctor', 'patient', 'complication', 'urgent', 'queueSize'});
 
+            obj.patientSelectionMethod = patientSelection;
 
             obj.totalSimulationTime = totalSimulationTime;
             obj.doctors = Doctor.empty(numDoctors, 0);
@@ -29,6 +32,9 @@ classdef Clinic < handle
 
             for i = 1:numDoctors
                 obj.doctors(i) = Doctor(i);  % Initialize each doctor
+                if(strcmp(patientSelection,'priority'))
+                    obj.doctors(i).priority = doctorPriorities(i);
+                end
             end
 
             % Schedule the arrival of urgent patients at randomized times
@@ -118,9 +124,8 @@ classdef Clinic < handle
 
         function obj = handleArrival(obj, patient)
             % Determine strategy for assigning a doctor
-            % Select strategy: 'random', 'priority', 'circular', or 'minWorkload'
-            strategy = 'minWorkload';
-            [freeDoctor, doctorIndex] = obj.assignDoctor(strategy);
+
+            [freeDoctor, doctorIndex] = obj.assignDoctor(obj.patientSelectionMethod);
 
             if isempty(freeDoctor)
                 if patient.isUrgent
