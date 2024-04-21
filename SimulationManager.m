@@ -14,6 +14,7 @@ classdef SimulationManager < handle
 
         selectionStrategy;
         priorites;
+        totalTreatedPatients;
     end
     
     methods
@@ -25,6 +26,7 @@ classdef SimulationManager < handle
             obj.doctorUtilizationsSums = zeros(obj.doctorCount, numExperiments); % Each column represents a doctor's total utilization across all experiments
             obj.finalQueueLengthHistory = cell(1, numExperiments); % Initialize as a cell array
 
+            obj.totalTreatedPatients = zeros(1, numExperiments);
             obj.informationOfExperiments = cell(1, numExperiments);
             obj.selectionStrategy = selectionStrategy;
             obj.priorites = priorites;
@@ -44,6 +46,7 @@ classdef SimulationManager < handle
                 obj.informationOfExperiments{i} = clinic.getInformation();
 
                 % Record the results
+                obj.totalTreatedPatients(i) = clinic.getTotalTreatedPatients();
                 obj.averageWaitingTimes(i) = stats.AverageWaitingTime;
                 obj.doctorUtilizationsSums(:, i) = stats.DoctorUtilizations;
                 obj.finalQueueLengthHistory{i} = stats.QueueLengthHistory; % Store each history in a cell
@@ -75,6 +78,11 @@ classdef SimulationManager < handle
 
         function information = getInformation(obj)
             information = obj.informationOfExperiments;
+            return;
+        end
+
+        function totalTreatedPatients = getTotalTreatedPatients(obj)
+            totalTreatedPatients = obj.totalTreatedPatients;
             return;
         end
         

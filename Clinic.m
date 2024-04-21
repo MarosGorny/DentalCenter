@@ -13,6 +13,7 @@ classdef Clinic < handle
         information;
 
         patientSelectionMethod;
+        totalTreatedPatients = 0;
     end
 
     methods
@@ -97,6 +98,8 @@ classdef Clinic < handle
                     obj.information = [obj.information; newRow];
 
                     event.doctor.finishTreatment();
+
+                    obj.totalTreatedPatients = obj.totalTreatedPatients + 1;
 
                     % Check for next patient in queue
                     if ~isempty(obj.urgentQueue)
@@ -252,6 +255,10 @@ classdef Clinic < handle
 
         function info = getInformation(obj)
             info = obj.information;
+        end
+
+        function totalTreatedPatients = getTotalTreatedPatients(obj)
+             totalTreatedPatients = obj.totalTreatedPatients;
         end
 
         function stats = getResults(obj)
