@@ -76,6 +76,11 @@ classdef SimulationManager < handle
             return;
         end
 
+        function averageWaitingTimes = getAverageWaitingTimes(obj)
+            averageWaitingTimes = obj.averageWaitingTimes;
+            return;
+        end
+
         function information = getInformation(obj)
             information = obj.informationOfExperiments;
             return;
