@@ -27,10 +27,10 @@
 % Define the ranges for the parameters
 scenarioNumbers = [1, 2, 3];
 patientsPerIntervals = [3, 4, 5];
-appointmentsInterval = [25,30,35,40];
+appointmentsInterval = 26:1:37;
 endBuffers = 0:10:50; % From 0 to 50 in steps of 10 minutes
 
-numExperiments = 20; % Number of experiments per parameter set
+numExperiments = 30; % Number of experiments per parameter set
 
 % Calculate the total number of combinations
 totalCombinations = numel(scenarioNumbers) * numel(patientsPerIntervals) * ...
@@ -101,3 +101,4 @@ optimalResults = resultsTable(resultsTable.AverageWaitingTime < 10 & ...
 
 % Save the optimal results to a CSV file
 writetable(optimalResults, 'OptimalSimulationResults.csv');  % Saving only the filtered optimal results
+disp("ENDDDDDDDDDDDDDD!!!!!!!!!!!!!!!!!!!!!!!!!")
