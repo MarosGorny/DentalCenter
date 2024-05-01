@@ -6,6 +6,7 @@ classdef SimulationManager < handle
         doctorUtilizationsSums; % Sums of utilizations for averaging
         doctorCount; % Number of doctors
         finalAverageWaitingTime; % Final computed average waiting time
+        finalAVerageWaitingTimeAllRuns;
         finalDoctorUtilizations; % Final computed doctor utilizations
 
         finalQueueLengthHistory; % Store queue length histories from each experiment
@@ -68,6 +69,11 @@ classdef SimulationManager < handle
                 'DoctorUtilizations', obj.finalDoctorUtilizations, ...
                 'QueueLengthHistory', obj.finalQueueLengthHistory ...
             );
+            return;
+        end
+
+        function result = getAverageWaitingTimeForAllRuns(obj)
+            result = obj.averageWaitingTimes;
             return;
         end
 
